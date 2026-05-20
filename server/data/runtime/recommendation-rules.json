@@ -1,0 +1,44 @@
+[
+  {
+    "id": "R1779278275166",
+    "name": "首页运营曝光规则",
+    "naturalLanguage": "首页优先曝光智能家居商品，库存至少 20，毛利率高于 30%，过滤高售后风险商品，按推荐分从高到低展示 6 个。",
+    "dsl": {
+      "conditions": [
+        {
+          "field": "category",
+          "operator": "eq",
+          "value": "智能家居"
+        },
+        {
+          "field": "stock",
+          "operator": "gte",
+          "value": 20
+        },
+        {
+          "field": "grossMargin",
+          "operator": "gte",
+          "value": 0.3
+        },
+        {
+          "field": "afterSaleRisk",
+          "operator": "neq",
+          "value": "high"
+        }
+      ],
+      "sort": [
+        {
+          "field": "recommendScore",
+          "direction": "desc"
+        }
+      ],
+      "limit": 6
+    },
+    "validation": {
+      "level": "pass",
+      "warnings": [],
+      "estimatedMatches": 6
+    },
+    "createdAt": "2026-05-20T11:57:55.166Z"
+  }
+]

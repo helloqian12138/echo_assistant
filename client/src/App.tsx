@@ -2,12 +2,20 @@ import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { Layout, Menu, Typography } from 'antd';
 import AgentPage from './pages/AgentPage';
 import KnowledgePage from './pages/KnowledgePage';
+import MarketingPage from './pages/MarketingPage';
+import ProductIntakePage from './pages/ProductIntakePage';
 
 const { Header, Content } = Layout;
 
 export default function App() {
   const location = useLocation();
-  const selectedKey = location.pathname.startsWith('/knowledge') ? '/knowledge' : '/agent';
+  const selectedKey = location.pathname.startsWith('/knowledge')
+    ? '/knowledge'
+    : location.pathname.startsWith('/products')
+      ? '/products'
+      : location.pathname.startsWith('/marketing')
+        ? '/marketing'
+        : '/agent';
 
   return (
     <Layout className="app-shell">
@@ -36,6 +44,14 @@ export default function App() {
             {
               key: '/knowledge',
               label: <NavLink to="/knowledge">知识管理</NavLink>
+            },
+            {
+              key: '/products',
+              label: <NavLink to="/products">商品入库</NavLink>
+            },
+            {
+              key: '/marketing',
+              label: <NavLink to="/marketing">营销页</NavLink>
             }
           ]}
         />
@@ -45,6 +61,8 @@ export default function App() {
           <Route path="/" element={<Navigate to="/agent" replace />} />
           <Route path="/agent" element={<AgentPage />} />
           <Route path="/knowledge" element={<KnowledgePage />} />
+          <Route path="/products" element={<ProductIntakePage />} />
+          <Route path="/marketing" element={<MarketingPage />} />
         </Routes>
       </Content>
     </Layout>

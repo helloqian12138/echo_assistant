@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/vite-env.d.ts","./src/components/agenttrace.tsx","./src/components/readinesspanel.tsx","./src/pages/agentpage.tsx","./src/pages/knowledgepage.tsx"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/vite-env.d.ts","./src/components/agenttrace.tsx","./src/components/readinesspanel.tsx","./src/pages/agentpage.tsx","./src/pages/knowledgepage.tsx","./src/pages/marketingpage.tsx","./src/pages/productintakepage.tsx"],"version":"5.9.3"}

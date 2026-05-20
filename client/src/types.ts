@@ -83,3 +83,37 @@ export type ChatStreamEvent =
       type: 'error';
       message: string;
     };
+
+export type ProductRecord = {
+  id?: string;
+  name: string;
+  category: string;
+  price: number;
+  stock: number;
+  grossMargin: number;
+  tags: string[];
+  targetUsers: string[];
+  sellingPoints: string[];
+  afterSaleRisk: 'low' | 'medium' | 'high';
+  recommendScore: number;
+  raw: Record<string, string | number>;
+  createdAt?: string;
+  reason?: string;
+};
+
+export type RecommendationRule = {
+  id: string;
+  name: string;
+  naturalLanguage: string;
+  dsl: {
+    conditions: Array<{ field: string; operator: string; value: string | number }>;
+    sort: Array<{ field: string; direction: string }>;
+    limit: number;
+  };
+  validation: {
+    level: 'pass' | 'warning' | 'fail';
+    warnings: string[];
+    estimatedMatches: number;
+  };
+  createdAt: string;
+};

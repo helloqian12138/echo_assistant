@@ -169,6 +169,48 @@ body {
   width: 100%;
 }
 
+.upload-hint {
+  margin: 12px 0 0;
+}
+
+.rule-preview {
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  background: #f6f8fa;
+  border: 1px solid #e8edf4;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0;
+}
+
+.marketing-hero {
+  padding: 28px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e8edf4;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.product-card {
+  border-radius: 8px;
+}
+
+.product-card-body {
+  width: 100%;
+}
+
+.product-price {
+  color: #dc2626;
+  font-size: 24px;
+  font-weight: 700;
+}
+
 @media (max-width: 720px) {
   .app-header {
     height: auto;
