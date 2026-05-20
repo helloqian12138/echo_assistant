@@ -1,0 +1,45 @@
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #f5f7fb;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: #f5f7fb;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-bottom: 1px solid #e8edf4;
+  padding: 0 32px;
+}
+
+.app-title.ant-typography {
+  margin: 0;
+}
+
+.app-content {
+  width: min(960px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.intro {
+  margin-bottom: 24px;
+}
+
+.chat-card {
+  border-radius: 8px;
+}
+
+.chat-stack {
+  width: 100%;
+}
