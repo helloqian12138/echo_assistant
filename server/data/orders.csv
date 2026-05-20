@@ -1,0 +1,5 @@
+order_id,user_name,status,paid_at,shipped_at,delivered_at,amount,is_vip,item_name
+E1001,张三,delivered,2026-05-01,2026-05-02,2026-05-04,299,true,智能保温杯
+E1002,李四,shipping,2026-05-16,2026-05-17,,129,false,蓝牙耳机
+E1003,王五,paid,2026-05-20,,,599,true,人体工学椅
+E1004,赵六,delivered,2026-05-18,2026-05-18,2026-05-19,89,false,手机支架

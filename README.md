@@ -17,6 +17,8 @@ Built for real business scenarios such as:
 - SOP-based response generation
 - Source reference support
 - Simple and extensible workflow architecture
+- Knowledge management page with upload, preview, and delete
+- Agent demo page with readiness checks, knowledge retrieval trace, and mock order tool calls
 
 ## Tech Stack
 
@@ -84,8 +86,11 @@ OPENAI_MODEL=gpt-4o-mini
 ```text
 client/
   src/
-    App.tsx                 # Hello World page and ChatGPT call demo
+    App.tsx                 # Knowledge management page and Agent demo page
 server/
+  data/
+    seed/ecommerce-sop.md   # Built-in ecommerce SOP example knowledge
+    orders.csv              # Mock order data for query_order tool
   src/
     app.ts                  # Express app entry and middleware injection
     apis/                   # API route definitions
@@ -99,5 +104,14 @@ server/
 ```bash
 curl -X POST http://localhost:3001/api/chat \
   -H "Content-Type: application/json" \
-  -d '{"message":"用一句话介绍 Echo Assistant"}'
+  -d '{"message":"订单 E1001 用户想退款，应该怎么处理？","sessionId":"demo"}'
 ```
+
+Useful APIs:
+
+- `GET /api/readiness`: knowledge, model, and tool readiness
+- `GET /api/knowledge`: list knowledge documents
+- `POST /api/knowledge`: add a knowledge document with `{ "title": "...", "content": "..." }`
+- `GET /api/knowledge/:id`: preview a knowledge document
+- `DELETE /api/knowledge/:id`: delete uploaded knowledge
+- `POST /api/chat/stream`: stream agent status, answer tokens, and final trace data by SSE

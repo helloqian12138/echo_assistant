@@ -1,75 +1,51 @@
-import { useState } from 'react';
-import { Alert, Button, Card, Input, Layout, Space, Typography } from 'antd';
-
-type ChatResponse = {
-  answer: string;
-};
+import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Layout, Menu, Typography } from 'antd';
+import AgentPage from './pages/AgentPage';
+import KnowledgePage from './pages/KnowledgePage';
 
 const { Header, Content } = Layout;
 
 export default function App() {
-  const [message, setMessage] = useState('用一句话介绍 Echo Assistant');
-  const [answer, setAnswer] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  async function sendMessage() {
-    setLoading(true);
-    setError('');
-    setAnswer('');
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ message })
-      });
-
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.message ?? '请求失败');
-      }
-
-      setAnswer((payload as ChatResponse).answer);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '请求失败');
-    } finally {
-      setLoading(false);
-    }
-  }
+  const location = useLocation();
+  const selectedKey = location.pathname.startsWith('/knowledge') ? '/knowledge' : '/agent';
 
   return (
     <Layout className="app-shell">
       <Header className="app-header">
-        <Typography.Title level={3} className="app-title">
-          Echo Assistant
-        </Typography.Title>
+        <div className="brand">
+          <svg className="brand-logo" viewBox="0 0 96 36" role="img" aria-label="Echo AI logo">
+            <rect x="1" y="1" width="94" height="34" rx="8" fill="#111827" />
+            <path d="M12 25V11h21v4H17v2h14v4H17v2h16v4H12Z" fill="#ffffff" />
+            <text x="41" y="23" fill="#ffffff" fontFamily="Arial, sans-serif" fontSize="13" fontWeight="700">
+              Echo AI
+            </text>
+          </svg>
+          <Typography.Title level={3} className="app-title">
+            Echo Assistant
+          </Typography.Title>
+        </div>
+        <Menu
+          mode="horizontal"
+          selectedKeys={[selectedKey]}
+          className="app-nav"
+          items={[
+            {
+              key: '/agent',
+              label: <NavLink to="/agent">Agent 助手</NavLink>
+            },
+            {
+              key: '/knowledge',
+              label: <NavLink to="/knowledge">知识管理</NavLink>
+            }
+          ]}
+        />
       </Header>
       <Content className="app-content">
-        <section className="intro">
-          <Typography.Title>AI 企业知识库助手</Typography.Title>
-          <Typography.Paragraph>
-            Hello World. 当前框架已包含 React + Vite + Antd 前端，以及 Express + LangChain 后端示例接口。
-          </Typography.Paragraph>
-        </section>
-
-        <Card title="ChatGPT 调用示例" className="chat-card">
-          <Space direction="vertical" size="middle" className="chat-stack">
-            <Input.TextArea
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              autoSize={{ minRows: 3, maxRows: 6 }}
-              placeholder="输入一个问题"
-            />
-            <Button type="primary" loading={loading} onClick={sendMessage}>
-              发送
-            </Button>
-            {answer ? <Alert type="success" message={answer} /> : null}
-            {error ? <Alert type="error" message={error} /> : null}
-          </Space>
-        </Card>
+        <Routes>
+          <Route path="/" element={<Navigate to="/agent" replace />} />
+          <Route path="/agent" element={<AgentPage />} />
+          <Route path="/knowledge" element={<KnowledgePage />} />
+        </Routes>
       </Content>
     </Layout>
   );
