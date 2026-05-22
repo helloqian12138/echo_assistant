@@ -140,13 +140,15 @@ async function readRules() {
 
 function createFallbackRule(naturalLanguage: string) {
   const conditions: RuleCondition[] = [];
-  if (/智能家居|保温杯|家居/.test(naturalLanguage)) conditions.push({ field: 'category', operator: 'eq', value: '智能家居' });
-  if (/库存/.test(naturalLanguage)) conditions.push({ field: 'stock', operator: 'gte', value: 20 });
-  if (/毛利|利润/.test(naturalLanguage)) conditions.push({ field: 'grossMargin', operator: 'gte', value: 0.3 });
-  if (/售后风险|风险/.test(naturalLanguage)) conditions.push({ field: 'afterSaleRisk', operator: 'neq', value: 'high' });
-  if (/新人/.test(naturalLanguage)) conditions.push({ field: 'price', operator: 'lte', value: 199 });
+  if (/智能家居|保温杯|家居|smart home|thermal cup|home/i.test(naturalLanguage)) {
+    conditions.push({ field: 'category', operator: 'eq', value: '智能家居' });
+  }
+  if (/库存|stock|inventory/i.test(naturalLanguage)) conditions.push({ field: 'stock', operator: 'gte', value: 20 });
+  if (/毛利|利润|margin|profit/i.test(naturalLanguage)) conditions.push({ field: 'grossMargin', operator: 'gte', value: 0.3 });
+  if (/售后风险|风险|after-sales risk|risk/i.test(naturalLanguage)) conditions.push({ field: 'afterSaleRisk', operator: 'neq', value: 'high' });
+  if (/新人|new user/i.test(naturalLanguage)) conditions.push({ field: 'price', operator: 'lte', value: 199 });
   return ruleSchema.parse({
-    name: '运营推荐规则',
+    name: /[\u4e00-\u9fa5]/.test(naturalLanguage) ? '运营推荐规则' : 'Recommendation workflow rule',
     dsl: {
       conditions,
       sort: [{ field: 'recommendScore', direction: 'desc' }],

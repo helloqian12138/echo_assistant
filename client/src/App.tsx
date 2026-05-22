@@ -1,14 +1,21 @@
+import { useState } from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
-import { Layout, Menu, Typography } from 'antd';
+import { Layout, Menu, Segmented, Typography } from 'antd';
 import AgentPage from './pages/AgentPage';
 import KnowledgePage from './pages/KnowledgePage';
 import MarketingPage from './pages/MarketingPage';
 import ProductIntakePage from './pages/ProductIntakePage';
+import type { Language } from './types';
 
 const { Header, Content } = Layout;
 
 export default function App() {
+  const [language, setLanguage] = useState<Language>(() => {
+    if (typeof window === 'undefined') return 'en';
+    return new URLSearchParams(window.location.search).get('lang') === 'zh' ? 'zh' : 'en';
+  });
   const location = useLocation();
+  const copy = appCopy[language];
   const selectedKey = location.pathname.startsWith('/knowledge')
     ? '/knowledge'
     : location.pathname.startsWith('/products')
@@ -28,9 +35,12 @@ export default function App() {
               Echo AI
             </text>
           </svg>
-          <Typography.Title level={3} className="app-title">
-            Echo Assistant
-          </Typography.Title>
+          <div className="brand-copy">
+            <Typography.Title level={3} className="app-title">
+              Echo Assistant
+            </Typography.Title>
+            <Typography.Text className="app-subtitle">{copy.subtitle}</Typography.Text>
+          </div>
         </div>
         <Menu
           mode="horizontal"
@@ -39,32 +49,83 @@ export default function App() {
           items={[
             {
               key: '/agent',
-              label: <NavLink to="/agent">Agent 助手</NavLink>
+              label: <NavLink to="/agent">{copy.nav.agent}</NavLink>
             },
             {
               key: '/knowledge',
-              label: <NavLink to="/knowledge">知识管理</NavLink>
+              label: <NavLink to="/knowledge">{copy.nav.knowledge}</NavLink>
             },
             {
               key: '/products',
-              label: <NavLink to="/products">商品入库</NavLink>
+              label: <NavLink to="/products">{copy.nav.products}</NavLink>
             },
             {
               key: '/marketing',
-              label: <NavLink to="/marketing">营销页</NavLink>
+              label: <NavLink to="/marketing">{copy.nav.marketing}</NavLink>
             }
+          ]}
+        />
+        <Segmented
+          className="language-switch"
+          size="small"
+          value={language}
+          onChange={(value) => setLanguage(value as Language)}
+          options={[
+            { label: copy.language.en, value: 'en' },
+            { label: copy.language.zh, value: 'zh' }
           ]}
         />
       </Header>
       <Content className="app-content">
         <Routes>
           <Route path="/" element={<Navigate to="/agent" replace />} />
-          <Route path="/agent" element={<AgentPage />} />
-          <Route path="/knowledge" element={<KnowledgePage />} />
-          <Route path="/products" element={<ProductIntakePage />} />
-          <Route path="/marketing" element={<MarketingPage />} />
+          <Route path="/agent" element={<AgentPage language={language} />} />
+          <Route path="/knowledge" element={<KnowledgePage language={language} />} />
+          <Route path="/products" element={<ProductIntakePage language={language} />} />
+          <Route path="/marketing" element={<MarketingPage language={language} />} />
         </Routes>
       </Content>
     </Layout>
   );
 }
+
+const appCopy: Record<Language, {
+  subtitle: string;
+  language: {
+    en: string;
+    zh: string;
+  };
+  nav: {
+    agent: string;
+    knowledge: string;
+    products: string;
+    marketing: string;
+  };
+}> = {
+  en: {
+    subtitle: 'AI-native Enterprise Workflow Assistant',
+    language: {
+      en: 'English',
+      zh: 'Chinese'
+    },
+    nav: {
+      agent: 'Support Agent',
+      knowledge: 'Knowledge',
+      products: 'Workflow Rules',
+      marketing: 'Result Preview'
+    }
+  },
+  zh: {
+    subtitle: '企业智能工作流助手',
+    language: {
+      en: '英文',
+      zh: '中文'
+    },
+    nav: {
+      agent: '客服助手',
+      knowledge: '知识库',
+      products: '工作流规则',
+      marketing: '结果预览'
+    }
+  }
+};

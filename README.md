@@ -1,60 +1,86 @@
 # Echo Assistant
 
-Echo Assistant is an AI-powered enterprise workflow assistant focused on SOP understanding, knowledge retrieval, and workflow automation.
+[中文 README](README.zh.md)
 
-Built for real business scenarios such as:
+**AI-native Enterprise Workflow Assistant**
 
-- Customer support SOP assistant
-- Internal knowledge base QA
-- Operations workflow guidance
-- AI-powered enterprise search
+Echo Assistant is an AI-native workflow assistant designed for enterprise operations, customer support automation, knowledge-driven task execution, and natural language driven business workflows.
 
-## Features
+Echo Assistant helps teams automate customer support and operational workflows using AI.
 
-- Upload enterprise documents (txt / md / pdf)
-- RAG-based knowledge retrieval
-- Context-aware AI answers
-- SOP-based response generation
-- Source reference support
-- Simple and extensible workflow architecture
-- Knowledge management page with upload, preview, and delete
-- Agent demo page with readiness checks, knowledge retrieval trace, and mock order tool calls
+## Core Features
+
+### AI Customer Support
+
+Answers customer and internal support questions from an enterprise knowledge base, with source-aware responses and workflow-specific suggestions.
+
+### Natural Language Workflow Rules
+
+Turns plain-language operating policies into executable workflow logic, so business teams can configure rules without writing code.
+
+### Workflow Automation
+
+Connects knowledge retrieval, AI reasoning, validation, and tool calls into repeatable workflows for operations teams.
+
+## Demo Scenario
+
+The current demo uses e-commerce operations as one example scenario:
+
+- Customer support QA for refund and after-sales policies
+- Natural language recommendation and exposure rules
+- Product intake, enrichment, and recommendation result preview
+
+The product positioning is broader than this demo. Echo Assistant is intended to support enterprise workflows across support, operations, internal knowledge, approval flows, and other process-heavy teams.
+
+## Architecture
+
+```text
+User
+  ↓
+React Frontend
+  ↓
+Node.js API
+  ↓
+AI Orchestration / RAG
+  ↓
+Workflow Engine
+  ↓
+Business Tools & Data
+```
+
+## Screenshots
+
+### Customer Support QA
+
+![Customer Support QA](docs/screenshots/customer-support-qa.png)
+
+### Natural Language Workflow Rule
+
+![Natural Language Workflow Rule](docs/screenshots/workflow-rule-input.png)
+
+### Recommendation Result Preview
+
+![Recommendation Result Preview](docs/screenshots/recommendation-results.png)
 
 ## Tech Stack
 
 - Frontend: React + Vite + Ant Design + TypeScript
 - Backend: Express + TypeScript + LangChain + LangGraph + Zod + Dotenv
-- OpenAI API
-- RAG
-- Vector Search
+- AI orchestration with knowledge retrieval, streaming responses, and tool calls
+- Local workflow data for demo products, recommendation rules, knowledge, and orders
 
 ## Example Workflow
 
-1. Upload company SOP or internal documents
-2. Ask operational questions
-3. AI retrieves related knowledge
-4. AI generates actionable answers and suggestions
+1. Upload enterprise policies, SOPs, or internal documents
+2. Ask a support or operations question in natural language
+3. Echo Assistant retrieves relevant knowledge and checks workflow context
+4. Echo Assistant generates an actionable answer or converts an operating rule into executable workflow logic
 
 Example:
 
-> User:
-> Customer requests refund after 7 days. What should we do?
+> User: Customer requests refund after 7 days. What should we do?
 
-> Echo Assistant:
-> According to the refund SOP, orders exceeding 7 days require manual approval from operations. Suggested response template has been generated.
-
-## Project Goal
-
-Echo Assistant is designed to help enterprises reduce repetitive manual work and transform traditional workflows into AI-native workflows.
-
-## Future Plans
-
-- Multi-agent workflow orchestration
-- Approval workflow automation
-- Tool calling support
-- CRM / ERP integration
-- Multi-modal document support
-- Workflow memory & execution tracking
+> Echo Assistant: According to the refund SOP, orders exceeding 7 days require manual approval from operations. Suggested response template has been generated.
 
 ## Run Locally
 
@@ -86,17 +112,20 @@ OPENAI_MODEL=gpt-4o-mini
 ```text
 client/
   src/
-    App.tsx                 # Knowledge management page and Agent demo page
+    App.tsx                 # Product shell and workflow scenario pages
 server/
   data/
-    seed/ecommerce-sop.md   # Built-in ecommerce SOP example knowledge
-    orders.csv              # Mock order data for query_order tool
+    seed/ecommerce-sop.md   # Built-in demo SOP knowledge
+    orders.csv              # Mock demo order data for query_order tool
   src/
     app.ts                  # Express app entry and middleware injection
     apis/                   # API route definitions
     controllers/            # Request validation and business orchestration
     middlewares/            # App middleware and error handling
-    services/               # Generic agent implementation
+    services/               # Agent, knowledge, product, and workflow services
+samples/
+  product-intake-demo.xlsx
+  smart-thermos-after-sales-sop.md
 ```
 
 ## API Demo
@@ -115,3 +144,6 @@ Useful APIs:
 - `GET /api/knowledge/:id`: preview a knowledge document
 - `DELETE /api/knowledge/:id`: delete uploaded knowledge
 - `POST /api/chat/stream`: stream agent status, answer tokens, and final trace data by SSE
+- `POST /api/products/enrich`: enrich product intake rows for the demo workflow
+- `POST /api/recommendations/rules`: convert a natural language demo rule into executable recommendation logic
+- `GET /api/recommendations/feed`: preview recommendation results from saved demo rules

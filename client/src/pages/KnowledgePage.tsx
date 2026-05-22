@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Modal, Space, Table, Tag, Typography, Upload, message as antdMessage } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { RcFile } from 'antd/es/upload';
-import type { KnowledgeDocument, KnowledgeItem } from '../types';
+import type { KnowledgeDocument, KnowledgeItem, Language } from '../types';
 
-export default function KnowledgePage() {
+export default function KnowledgePage({ language }: { language: Language }) {
+  const copy = knowledgeCopy[language];
   const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([]);
   const [knowledgeLoading, setKnowledgeLoading] = useState(false);
   const [preview, setPreview] = useState<KnowledgeDocument | null>(null);
@@ -17,7 +18,7 @@ export default function KnowledgePage() {
   const knowledgeColumns = useMemo<ColumnsType<KnowledgeItem>>(
     () => [
       {
-        title: '知识名称',
+        title: copy.columns.name,
         dataIndex: 'title',
         key: 'title',
         render: (value: string, record) => (
@@ -28,42 +29,42 @@ export default function KnowledgePage() {
         )
       },
       {
-        title: '来源',
+        title: copy.columns.source,
         dataIndex: 'source',
         key: 'source',
         width: 110,
         render: (source: KnowledgeItem['source']) => (
-          <Tag color={source === 'seed' ? 'blue' : 'green'}>{source === 'seed' ? '内置示例' : '上传'}</Tag>
+          <Tag color={source === 'seed' ? 'blue' : 'green'}>{source === 'seed' ? copy.seed : copy.uploaded}</Tag>
         )
       },
       {
-        title: '索引',
+        title: copy.columns.index,
         key: 'index',
         width: 130,
         render: (_, record) => (
           <Space>
-            <Tag color="geekblue">{record.chunks} chunks</Tag>
-            <Tag color="default">{record.size} 字</Tag>
+            <Tag color="geekblue">{record.chunks} {copy.chunks}</Tag>
+            <Tag color="default">{record.size} {copy.characters}</Tag>
           </Space>
         )
       },
       {
-        title: '操作',
+        title: copy.columns.actions,
         key: 'actions',
         width: 170,
         render: (_, record) => (
           <Space>
             <Button size="small" onClick={() => previewKnowledge(record.id)}>
-              预览
+              {copy.preview}
             </Button>
             <Button size="small" danger disabled={record.source === 'seed'} onClick={() => deleteKnowledge(record.id)}>
-              删除
+              {copy.delete}
             </Button>
           </Space>
         )
       }
     ],
-    []
+    [copy]
   );
 
   async function refreshKnowledge() {
@@ -73,7 +74,7 @@ export default function KnowledgePage() {
       const payload = await response.json();
       setKnowledgeItems(payload.items ?? []);
     } catch (err) {
-      antdMessage.error(err instanceof Error ? err.message : '加载知识失败');
+      antdMessage.error(err instanceof Error ? err.message : copy.loadFailed);
     } finally {
       setKnowledgeLoading(false);
     }
@@ -83,7 +84,7 @@ export default function KnowledgePage() {
     const response = await fetch(`/api/knowledge/${id}`);
     const payload = await response.json();
     if (!response.ok) {
-      antdMessage.error(payload.message ?? '预览失败');
+      antdMessage.error(payload.message ?? copy.previewFailed);
       return;
     }
 
@@ -98,11 +99,11 @@ export default function KnowledgePage() {
 
     if (!response.ok) {
       const payload = await response.json();
-      antdMessage.error(payload.message ?? '删除失败');
+      antdMessage.error(payload.message ?? copy.deleteFailed);
       return;
     }
 
-    antdMessage.success('已删除知识');
+    antdMessage.success(copy.deleted);
     await refreshKnowledge();
   }
 
@@ -121,11 +122,11 @@ export default function KnowledgePage() {
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      antdMessage.error(payload.message ?? '上传失败');
+      antdMessage.error(payload.message ?? copy.uploadFailed);
       return Upload.LIST_IGNORE;
     }
 
-    antdMessage.success('知识已上传并完成索引');
+    antdMessage.success(copy.uploadedDone);
     await refreshKnowledge();
     return Upload.LIST_IGNORE;
   }
@@ -133,23 +134,30 @@ export default function KnowledgePage() {
   return (
     <Space direction="vertical" size="large" className="page-stack">
       <section className="page-head">
-        <Typography.Title level={2}>知识管理</Typography.Title>
+        <Typography.Title level={2}>{copy.title}</Typography.Title>
         <Typography.Paragraph>
-          管理企业知识文档。系统已内置一份电商客服 SOP 示例知识，上传的文本文件会自动切分并加入本地检索索引。
+          {copy.description}
         </Typography.Paragraph>
       </section>
 
       <Card className="panel-card">
         <Space wrap>
           <Upload beforeUpload={uploadKnowledge} showUploadList={false} accept=".txt,.md,.csv">
-            <Button type="primary">上传知识文件</Button>
+            <Button type="primary">{copy.upload}</Button>
           </Upload>
-          <Button onClick={() => void refreshKnowledge()}>刷新列表</Button>
+          <Button onClick={() => void refreshKnowledge()}>{copy.refresh}</Button>
         </Space>
       </Card>
 
-      <Card title="知识列表" className="panel-card">
-        <Table rowKey="id" loading={knowledgeLoading} columns={knowledgeColumns} dataSource={knowledgeItems} pagination={false} />
+      <Card title={copy.listTitle} className="panel-card">
+        <Table
+          rowKey="id"
+          loading={knowledgeLoading}
+          columns={knowledgeColumns}
+          dataSource={knowledgeItems}
+          locale={{ emptyText: copy.noData }}
+          pagination={false}
+        />
       </Card>
 
       <Modal title={preview?.title} open={previewOpen} onCancel={() => setPreviewOpen(false)} footer={null} width={900}>
@@ -158,3 +166,84 @@ export default function KnowledgePage() {
     </Space>
   );
 }
+
+const knowledgeCopy: Record<Language, {
+  title: string;
+  description: string;
+  upload: string;
+  refresh: string;
+  listTitle: string;
+  seed: string;
+  uploaded: string;
+  chunks: string;
+  characters: string;
+  preview: string;
+  delete: string;
+  noData: string;
+  loadFailed: string;
+  previewFailed: string;
+  deleteFailed: string;
+  deleted: string;
+  uploadFailed: string;
+  uploadedDone: string;
+  columns: {
+    name: string;
+    source: string;
+    index: string;
+    actions: string;
+  };
+}> = {
+  en: {
+    title: 'Enterprise Knowledge Base',
+    description:
+      'Manage enterprise policies, SOPs, and operational knowledge. The current seed document is an e-commerce support SOP for the demo scenario.',
+    upload: 'Upload knowledge file',
+    refresh: 'Refresh list',
+    listTitle: 'Knowledge documents',
+    seed: 'Seed demo',
+    uploaded: 'Uploaded',
+    chunks: 'chunks',
+    characters: 'chars',
+    preview: 'Preview',
+    delete: 'Delete',
+    noData: 'No knowledge documents',
+    loadFailed: 'Failed to load knowledge',
+    previewFailed: 'Preview failed',
+    deleteFailed: 'Delete failed',
+    deleted: 'Knowledge deleted',
+    uploadFailed: 'Upload failed',
+    uploadedDone: 'Knowledge uploaded and indexed',
+    columns: {
+      name: 'Knowledge name',
+      source: 'Source',
+      index: 'Index',
+      actions: 'Actions'
+    }
+  },
+  zh: {
+    title: '企业知识库',
+    description: '管理企业政策、流程文档和运营知识。当前内置文档是用于演示场景的电商客服流程规范。',
+    upload: '上传知识文件',
+    refresh: '刷新列表',
+    listTitle: '知识列表',
+    seed: '内置示例',
+    uploaded: '上传',
+    chunks: '片段',
+    characters: '字',
+    preview: '预览',
+    delete: '删除',
+    noData: '暂无知识文档',
+    loadFailed: '加载知识失败',
+    previewFailed: '预览失败',
+    deleteFailed: '删除失败',
+    deleted: '已删除知识',
+    uploadFailed: '上传失败',
+    uploadedDone: '知识已上传并完成索引',
+    columns: {
+      name: '知识名称',
+      source: '来源',
+      index: '索引',
+      actions: '操作'
+    }
+  }
+};

@@ -64,6 +64,21 @@ export class EnterpriseAgentService {
   private sessions = new Map<string, SessionMessage[]>();
 
   async chat(message: string, sessionId = 'default'): Promise<AgentChatResult> {
+    if (isSmallTalk(message)) {
+      const answer = buildSmallTalkAnswer(message);
+      return this.buildDirectResult(message, answer, sessionId);
+    }
+
+    if (isCapabilityQuestion(message)) {
+      const answer = buildCapabilityAnswer(message);
+      return this.buildDirectResult(message, answer, sessionId);
+    }
+
+    if (!hasSupportedIntent(message)) {
+      const answer = buildUnsupportedIntentAnswer(message);
+      return this.buildDirectResult(message, answer, sessionId);
+    }
+
     const model = createChatModel(0.2);
 
     const graph = new StateGraph(AgentState)
@@ -144,6 +159,31 @@ export class EnterpriseAgentService {
   }
 
   async *streamChat(message: string, sessionId = 'default'): AsyncGenerator<AgentStreamEvent> {
+    if (isSmallTalk(message)) {
+      const answer = buildSmallTalkAnswer(message);
+      yield { type: 'status', message: '识别为普通问候，跳过订单查询和知识检索' };
+      yield { type: 'token', token: answer };
+
+      yield { type: 'done', result: this.buildDirectResult(message, answer, sessionId) };
+      return;
+    }
+
+    if (isCapabilityQuestion(message)) {
+      const answer = buildCapabilityAnswer(message);
+      yield { type: 'status', message: '识别为能力咨询，返回系统能力说明' };
+      yield { type: 'token', token: answer };
+      yield { type: 'done', result: this.buildDirectResult(message, answer, sessionId) };
+      return;
+    }
+
+    if (!hasSupportedIntent(message)) {
+      const answer = buildUnsupportedIntentAnswer(message);
+      yield { type: 'status', message: '识别为非业务相关问题，跳过订单查询和知识检索' };
+      yield { type: 'token', token: answer };
+      yield { type: 'done', result: this.buildDirectResult(message, answer, sessionId) };
+      return;
+    }
+
     const model = createChatModel(0.2);
 
     yield { type: 'status', message: '正在识别问题中的订单信息' };
@@ -211,6 +251,10 @@ export class EnterpriseAgentService {
       return directMatch[0].toUpperCase();
     }
 
+    if (!hasOrderRelatedIntent(question)) {
+      return undefined;
+    }
+
     const model = createChatModel(0);
     const response = await model.invoke([
       new SystemMessage('从用户问题中提取订单号。只返回 JSON，例如 {"orderId":"E1001"}。如果没有订单号，返回 {}。'),
@@ -226,9 +270,72 @@ export class EnterpriseAgentService {
       return undefined;
     }
   }
+
+  private buildDirectResult(message: string, answer: string, sessionId: string): AgentChatResult {
+    const history = this.sessions.get(sessionId) ?? [];
+    const nextHistory = [...history, { role: 'user' as const, content: message }, { role: 'assistant' as const, content: answer }].slice(-10);
+    this.sessions.set(sessionId, nextHistory);
+
+    return {
+      answer,
+      sources: [],
+      toolCalls: [],
+      memory: {
+        sessionId,
+        turns: Math.floor(nextHistory.length / 2)
+      }
+    };
+  }
 }
 
 export const enterpriseAgentService = new EnterpriseAgentService();
+
+function isSmallTalk(message: string) {
+  const normalized = message.trim().toLowerCase();
+  if (!normalized) {
+    return false;
+  }
+
+  if (hasOrderRelatedIntent(normalized)) {
+    return false;
+  }
+
+  return /^(你好|您好|嗨|哈喽|hello|hi|hey|在吗|在不在|早上好|下午好|晚上好)[。！!,.，\s]*$/.test(normalized);
+}
+
+function hasOrderRelatedIntent(message: string) {
+  return /订单|退款|退货|售后|物流|快递|发货|签收|支付|商品|客服|赔付|换货|order|refund|return|after-?sales|logistics|shipping|delivery|payment|customer support/i.test(message);
+}
+
+function hasSupportedIntent(message: string) {
+  return hasOrderRelatedIntent(message) || isCapabilityQuestion(message) || hasWorkflowIntent(message);
+}
+
+function hasWorkflowIntent(message: string) {
+  return /企业|业务|运营|客户|用户|工单|流程|规则|审批|知识库|知识|文档|政策|制度|规范|话术|质检|投诉|推荐|曝光|配置|自动化|工作流|表格|入库|business|operation|customer|user|ticket|workflow|rule|approval|knowledge|document|policy|sop|support|complaint|recommendation|automation/i.test(message);
+}
+
+function isCapabilityQuestion(message: string) {
+  return /你能做什么|你可以做什么|有什么功能|支持什么|怎么用|帮助|help|what can you do|capabilities|features/i.test(message);
+}
+
+function buildSmallTalkAnswer(message: string) {
+  return /hello|hi|hey/i.test(message)
+    ? 'Hello, I am Echo Assistant. You can ask me about support issues, operational policies, knowledge base questions, or workflow rules.'
+    : '你好，我是 Echo Assistant。你可以问我客服处理、运营规则、企业知识库或工作流自动化相关问题。';
+}
+
+function buildCapabilityAnswer(message: string) {
+  return /help|what can you do|capabilities|features/i.test(message)
+    ? 'I can help with customer support workflows, enterprise knowledge base questions, order or after-sales handling, operational policies, and natural language workflow rules. For example, ask: "Order E1001 wants a refund. What should we do?"'
+    : '我可以帮助处理客服工作流、企业知识库问答、订单售后处理、运营政策查询，以及自然语言工作流规则配置。你可以这样问：“订单 E1001 用户想退款，应该怎么处理？”';
+}
+
+function buildUnsupportedIntentAnswer(message: string) {
+  return /[a-z]/i.test(message) && !/[\u4e00-\u9fa5]/.test(message)
+    ? 'I am currently focused on enterprise workflow assistance, including customer support, knowledge base QA, operational policies, and workflow rule configuration. Please ask a question in those areas.'
+    : '抱歉，这个问题不在我当前的企业工作流助手能力范围内。我可以帮助你处理客服售后、订单与物流、企业知识库、运营规则、审批流程和工作流自动化相关问题。';
+}
 
 function buildSystemPrompt() {
   return [

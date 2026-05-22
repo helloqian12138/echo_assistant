@@ -1,3 +1,5 @@
+export type Language = 'en' | 'zh';
+
 export type ChatResponse = {
   answer: string;
   sources: KnowledgeSource[];

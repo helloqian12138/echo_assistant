@@ -41,10 +41,27 @@ body {
   white-space: nowrap;
 }
 
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-subtitle.ant-typography {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .app-nav {
   flex: 1;
   min-width: 0;
   border-bottom: none;
+}
+
+.language-switch {
+  flex: 0 0 auto;
 }
 
 .app-content {
@@ -226,6 +243,10 @@ body {
 
   .app-title.ant-typography {
     font-size: 18px;
+  }
+
+  .app-subtitle.ant-typography {
+    font-size: 11px;
   }
 
   .app-content {
