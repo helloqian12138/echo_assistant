@@ -68,7 +68,7 @@ class RecommendationService {
     await ensureStore();
     const products = await productService.list();
     const parsed = await this.parseRule(input.naturalLanguage);
-    const dsl = normalizeDsl(parsed.dsl);
+    const dsl = normalizeDsl(parsed.dsl, input.naturalLanguage, products);
     const validation = validateRule(dsl, products, parsed.warnings);
     const rule: RecommendationRule = {
       id: `R${Date.now()}`,
@@ -143,6 +143,15 @@ function createFallbackRule(naturalLanguage: string) {
   if (/智能家居|保温杯|家居|smart home|thermal cup|home/i.test(naturalLanguage)) {
     conditions.push({ field: 'category', operator: 'eq', value: '智能家居' });
   }
+  if (/数码配件|数码|耳机|充电宝|手机配件|digital accessories|electronics|phone accessories|headphones/i.test(naturalLanguage)) {
+    conditions.push({ field: 'category', operator: 'eq', value: '数码配件' });
+  }
+  if (/居家办公|办公|桌|椅|收纳|home office|office/i.test(naturalLanguage)) {
+    conditions.push({ field: 'category', operator: 'eq', value: '居家办公' });
+  }
+  if (/日用百货|日用|百货|daily goods|general merchandise/i.test(naturalLanguage)) {
+    conditions.push({ field: 'category', operator: 'eq', value: '日用百货' });
+  }
   if (/库存|stock|inventory/i.test(naturalLanguage)) conditions.push({ field: 'stock', operator: 'gte', value: 20 });
   if (/毛利|利润|margin|profit/i.test(naturalLanguage)) conditions.push({ field: 'grossMargin', operator: 'gte', value: 0.3 });
   if (/售后风险|风险|after-sales risk|risk/i.test(naturalLanguage)) conditions.push({ field: 'afterSaleRisk', operator: 'neq', value: 'high' });
@@ -158,13 +167,51 @@ function createFallbackRule(naturalLanguage: string) {
   });
 }
 
-function normalizeDsl(dsl: RecommendationRuleDsl): RecommendationRuleDsl {
+function normalizeDsl(dsl: RecommendationRuleDsl, naturalLanguage: string, products: ProductRecord[]): RecommendationRuleDsl {
+  const categories = Array.from(new Set(products.map((product) => product.category).filter(Boolean)));
+  const explicitCategory = inferCategoryFromText(naturalLanguage, categories);
+  const conditions = (dsl.conditions ?? []).map((condition) => normalizeCondition(condition, categories));
+  const categoryCondition = explicitCategory ? { field: 'category' as const, operator: 'eq' as const, value: explicitCategory } : null;
+
   return {
-    conditions: dsl.conditions ?? [],
+    conditions: categoryCondition
+      ? [categoryCondition, ...conditions.filter((condition) => condition.field !== 'category')]
+      : conditions,
     sort: dsl.sort?.length ? dsl.sort : [{ field: 'recommendScore', direction: 'desc' }],
     limit: Math.min(12, Math.max(1, Number(dsl.limit) || 6))
   };
 }
+
+function normalizeCondition(condition: RuleCondition, categories: string[]): RuleCondition {
+  if (condition.field !== 'category' || typeof condition.value !== 'string') {
+    return condition;
+  }
+
+  return {
+    ...condition,
+    operator: 'eq',
+    value: normalizeCategoryValue(condition.value, categories) ?? condition.value
+  };
+}
+
+function inferCategoryFromText(text: string, categories: string[]) {
+  return categoryAliases.find((alias) => alias.pattern.test(text) && categories.includes(alias.category))?.category;
+}
+
+function normalizeCategoryValue(value: string, categories: string[]) {
+  if (categories.includes(value)) {
+    return value;
+  }
+
+  return categoryAliases.find((alias) => alias.pattern.test(value) && categories.includes(alias.category))?.category;
+}
+
+const categoryAliases = [
+  { category: '智能家居', pattern: /智能家居|保温杯|家居|smart home|thermal cup|home/i },
+  { category: '数码配件', pattern: /数码配件|数码|耳机|充电宝|手机配件|digital accessories|electronics|phone accessories|headphones/i },
+  { category: '居家办公', pattern: /居家办公|办公|桌|椅|收纳|home office|office/i },
+  { category: '日用百货', pattern: /日用百货|日用|百货|daily goods|general merchandise/i }
+];
 
 function validateRule(dsl: RecommendationRuleDsl, products: ProductRecord[], aiWarnings: string[]) {
   const estimatedMatches = applyRule(products, dsl, 'VIP 用户').length;

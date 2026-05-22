@@ -106,7 +106,7 @@ const appCopy: Record<Language, {
     subtitle: 'AI-native Enterprise Workflow Assistant',
     language: {
       en: 'English',
-      zh: 'Chinese'
+      zh: '中文'
     },
     nav: {
       agent: 'Support Agent',
@@ -118,7 +118,7 @@ const appCopy: Record<Language, {
   zh: {
     subtitle: '企业智能工作流助手',
     language: {
-      en: '英文',
+      en: 'English',
       zh: '中文'
     },
     nav: {
