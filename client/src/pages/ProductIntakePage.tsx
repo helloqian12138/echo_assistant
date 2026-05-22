@@ -28,11 +28,10 @@ export default function ProductIntakePage({ language }: { language: Language }) 
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (loading) return;
     setRuleText(defaultRules[language]);
     setProcessSteps(initialSteps);
     setRule(null);
-  }, [initialSteps, language, loading]);
+  }, [initialSteps, language]);
 
   const columns: ColumnsType<ProductRecord> = [
     { title: copy.columns.product, dataIndex: 'name', key: 'name' },
